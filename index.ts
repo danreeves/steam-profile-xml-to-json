@@ -1,4 +1,4 @@
-import { parse } from "https://deno.land/x/xml/mod.ts";
+import { parse } from "https://deno.land/x/xml@2.1.3/mod.ts";
 
 Deno.serve(async (request: Request) => {
   const steamId = request.url.split("/").pop() || "";
