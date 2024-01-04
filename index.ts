@@ -13,5 +13,6 @@ Deno.serve(async (request: Request) => {
       return new Response(JSON.stringify(json));
     }
   }
+
   return new Response("not found", { status: 404 });
 });
