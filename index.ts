@@ -10,7 +10,9 @@ Deno.serve(async (request: Request) => {
     if (response.ok) {
       const text = await response.text();
       const json = parse(text);
-      return new Response(JSON.stringify(json));
+      return new Response(JSON.stringify(json), {
+        headers: { "content-type": "application/json" },
+      });
     }
   }
 
