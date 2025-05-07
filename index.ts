@@ -1,4 +1,5 @@
 import { parse } from "https://deno.land/x/xml@2.1.3/mod.ts";
+const NOT_FOUND = JSON.stringify({ error: "not found"})
 
 Deno.serve(async (request: Request) => {
   const steamId = request.url.split("/").pop() || "";
@@ -21,5 +22,8 @@ Deno.serve(async (request: Request) => {
   }
 
   console.log(404, request.url)
-  return new Response("not found", { status: 404 });
+  return new Response(NOT_FOUND, { 
+    status: 404, 
+    "content-type": "application/json" 
+  });
 });
