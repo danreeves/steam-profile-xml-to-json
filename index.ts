@@ -10,11 +10,14 @@ Deno.serve(async (request: Request) => {
     if (response.ok) {
       const text = await response.text();
       const json = parse(text);
+
+      console.log(response.status, request.url)
       return new Response(JSON.stringify(json), {
         headers: { "content-type": "application/json" },
       });
     }
   }
 
+  console.log(404, request.url)
   return new Response("not found", { status: 404 });
 });
