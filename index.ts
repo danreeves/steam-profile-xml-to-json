@@ -11,10 +11,12 @@ Deno.serve(async (request: Request) => {
       const text = await response.text();
       const json = parse(text);
 
-      console.log(response.status, request.url)
-      return new Response(JSON.stringify(json), {
-        headers: { "content-type": "application/json" },
-      });
+      if (json.profile) {
+        console.log(response.status, request.url)
+        return new Response(JSON.stringify(json), {
+          headers: { "content-type": "application/json" },
+        });
+      }
     }
   }
 
