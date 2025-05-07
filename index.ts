@@ -23,7 +23,9 @@ Deno.serve(async (request: Request) => {
 
   console.log(404, request.url)
   return new Response(NOT_FOUND, { 
-    status: 404, 
-    "content-type": "application/json" 
+    status: 404,
+    headers: {
+      "content-type": "application/json" 
+    }
   });
 });
