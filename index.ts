@@ -4,7 +4,10 @@ const parser = new XMLParser({
   ignoreDeclaration: true,
 });
 
-const STEAM_AVATAR_CDN = "avatars.akamai.steamstatic.com";
+const STEAM_AVATAR_CDNS = new Set([
+  "avatars.akamai.steamstatic.com",
+  "avatars.cloudflare.steamstatic.com",
+]);
 const DIMENSION_RANGE: [number, number] = [50, 3000];
 
 type ImageTransformOptions = {
@@ -71,7 +74,7 @@ async function resizeAvatar(request: Request, url: URL): Promise<Response> {
   }
 
   // Never turn this endpoint into an open proxy.
-  if (imageUrl.protocol !== "https:" || imageUrl.hostname !== STEAM_AVATAR_CDN ||
+  if (imageUrl.protocol !== "https:" || !STEAM_AVATAR_CDNS.has(imageUrl.hostname) ||
       !/\.(?:jpe?g|png|webp)$/i.test(imageUrl.pathname)) {
     return new Response("Disallowed image URL", { status: 400 });
   }
@@ -102,14 +105,22 @@ async function resizeAvatar(request: Request, url: URL): Promise<Response> {
   }), options);
 }
 
-function proxyAvatarUrls(profile: Record<string, unknown>, requestUrl: string): void {
-  for (const field of ["avatar", "avatarmedium", "avatarfull"]) {
-    const sourceUrl = profile[field];
-    if (typeof sourceUrl !== "string") continue;
+function proxyAvatarUrls(value: unknown, requestUrl: string): void {
+  if (Array.isArray(value)) {
+    for (const item of value) proxyAvatarUrls(item, requestUrl);
+    return;
+  }
 
-    const proxyUrl = new URL("/resize", requestUrl);
-    proxyUrl.searchParams.set("url", sourceUrl);
-    profile[field] = proxyUrl.toString();
+  if (!value || typeof value !== "object") return;
+
+  for (const [field, fieldValue] of Object.entries(value)) {
+    if (/^avatar(?:icon|medium|full)$/i.test(field) && typeof fieldValue === "string") {
+      const proxyUrl = new URL("/resize", requestUrl);
+      proxyUrl.searchParams.set("url", fieldValue);
+      (value as Record<string, unknown>)[field] = proxyUrl.toString();
+    } else {
+      proxyAvatarUrls(fieldValue, requestUrl);
+    }
   }
 }
 

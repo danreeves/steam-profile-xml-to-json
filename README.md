@@ -24,13 +24,14 @@ Example: `https://steam-profile-xml-to-json.dnrvs.workers.dev/76561198032229961`
 
 ### `/resize?url=<cdn-url>`
 Proxies a Steam avatar CDN URL as a transparent PNG padded to a 9:10 portrait
-canvas. The URL must point to `avatars.akamai.steamstatic.com`.
+canvas. The URL must point to a Steam avatar CDN host:
+`avatars.akamai.steamstatic.com` or `avatars.cloudflare.steamstatic.com`.
 
 The default output is `90x100`. Use `w` and `h` query parameters for another
 bounded size, for example `/resize?url=<encoded-cdn-url>&w=72&h=80`.
 
-The `avatar`, `avatarmedium`, and `avatarfull` URLs returned by `/:steamid`
-are automatically changed to use this proxy.
+The `avatarIcon`, `avatarMedium`, and `avatarFull` URLs returned by `/:steamid`
+are automatically changed to use this proxy, including nested group avatars.
 
 For example, an avatar URL can be proxied with:
-`https://steam-profile-xml-to-json.dnrvs.workers.dev/resize?url=<encoded-cdn-url>`.
+`https://steam-profile-xml-to-json.dnrvs.workers.dev/resize?url=https://avatars.cloudflare.steamstatic.com/ae4f292ce715a84c7a77673e29ad0dcf676f0e66.jpg`.
