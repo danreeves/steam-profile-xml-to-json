@@ -11,9 +11,8 @@ const STEAM_AVATAR_CDNS = new Set([
 const CANVAS_WIDTH = 90;
 const CANVAS_HEIGHT = 100;
 const AVATAR_SIZE_RANGE: [number, number] = [50, CANVAS_WIDTH];
-const TRANSPARENT_PIXEL = Uint8Array.from(atob(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
-), (character) => character.charCodeAt(0));
+const TRANSPARENT_CANVAS_URL =
+  "https://placehold.co/90x100/transparent/transparent.png";
 
 type ImageTransformOptions = {
   fit?: "contain";
@@ -40,14 +39,6 @@ export default {
 
     if (url.pathname === "/resize") {
       return resizeAvatar(request, url);
-    }
-    if (url.pathname === "/transparent.png") {
-      return new Response(TRANSPARENT_PIXEL, {
-        headers: {
-          "content-type": "image/png",
-          "cache-control": "public, max-age=86400",
-        },
-      });
     }
 
     const steamId = request.url.split("/").pop() || "";
@@ -123,7 +114,7 @@ async function resizeAvatar(request: Request, url: URL): Promise<Response> {
     },
   };
 
-  return fetch(new URL("/transparent.png", request.url), options);
+  return fetch(TRANSPARENT_CANVAS_URL, options);
 }
 
 function parseDimension(value: string | null, fallback: number): number | null {
