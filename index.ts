@@ -8,14 +8,26 @@ const STEAM_AVATAR_CDNS = new Set([
   "avatars.akamai.steamstatic.com",
   "avatars.cloudflare.steamstatic.com",
 ]);
-const DIMENSION_RANGE: [number, number] = [50, 3000];
+const CANVAS_WIDTH = 90;
+const CANVAS_HEIGHT = 100;
+const AVATAR_SIZE_RANGE: [number, number] = [50, CANVAS_WIDTH];
+const TRANSPARENT_PIXEL = Uint8Array.from(atob(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+), (character) => character.charCodeAt(0));
 
 type ImageTransformOptions = {
-  fit: "pad";
+  fit?: "contain";
   width: number;
   height: number;
-  background: "transparent";
   format: "png";
+  draw?: [{
+    url: string;
+    width: number;
+    height: number;
+    fit: "contain";
+    left: number;
+    top: number;
+  }];
 };
 
 type ImageRequestInit = RequestInit & {
@@ -28,6 +40,14 @@ export default {
 
     if (url.pathname === "/resize") {
       return resizeAvatar(request, url);
+    }
+    if (url.pathname === "/transparent.png") {
+      return new Response(TRANSPARENT_PIXEL, {
+        headers: {
+          "content-type": "image/png",
+          "cache-control": "public, max-age=86400",
+        },
+      });
     }
 
     const steamId = request.url.split("/").pop() || "";
@@ -78,30 +98,32 @@ async function resizeAvatar(request: Request, url: URL): Promise<Response> {
     return new Response("Disallowed image URL", { status: 400 });
   }
 
-  const width = parseDimension(url.searchParams.get("w"), 90);
-  const height = parseDimension(url.searchParams.get("h"), 100);
-  if (width === null || height === null) {
-    return new Response(
-      `Invalid image dimensions [${DIMENSION_RANGE.join("-")}]`,
-      { status: 400 },
-    );
+  const size = parseDimension(url.searchParams.get("size"), CANVAS_WIDTH);
+  if (size === null) {
+    return new Response(`Invalid avatar size [${AVATAR_SIZE_RANGE.join("-")}]`, {
+      status: 400,
+    });
   }
 
   const options: ImageRequestInit = {
     cf: {
       image: {
-        fit: "pad",
-        width,
-        height,
-        background: "transparent",
+        width: CANVAS_WIDTH,
+        height: CANVAS_HEIGHT,
         format: "png",
+        draw: [{
+          url: imageUrl.toString(),
+          width: size,
+          height: size,
+          fit: "contain",
+          left: Math.floor((CANVAS_WIDTH - size) / 2),
+          top: Math.floor((CANVAS_HEIGHT - size) / 2),
+        }],
       },
     },
   };
 
-  return fetch(new Request(imageUrl, {
-    headers: request.headers,
-  }), options);
+  return fetch(new URL("/transparent.png", request.url), options);
 }
 
 function parseDimension(value: string | null, fallback: number): number | null {
@@ -109,8 +131,8 @@ function parseDimension(value: string | null, fallback: number): number | null {
 
   const dimension = Number(value);
   if (!Number.isInteger(dimension) ||
-      dimension < DIMENSION_RANGE[0] ||
-      dimension > DIMENSION_RANGE[1]) {
+      dimension < AVATAR_SIZE_RANGE[0] ||
+      dimension > AVATAR_SIZE_RANGE[1]) {
     return null;
   }
 
