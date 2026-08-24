@@ -30,8 +30,8 @@ canvas. The URL must point to a Steam avatar CDN host:
 The default output is `90x100`. Use `w` and `h` query parameters for another
 bounded size, for example `/resize?url=<encoded-cdn-url>&w=72&h=80`.
 
-The `avatarIcon`, `avatarMedium`, and `avatarFull` URLs returned by `/:steamid`
-are automatically changed to use this proxy, including nested group avatars.
+The profile endpoint leaves avatar URLs unchanged. Use this endpoint explicitly
+when a padded portrait image is needed.
 
 For example, an avatar URL can be proxied with:
 `https://steam-profile-xml-to-json.dnrvs.workers.dev/resize?url=https://avatars.cloudflare.steamstatic.com/ae4f292ce715a84c7a77673e29ad0dcf676f0e66.jpg`.

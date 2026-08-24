@@ -41,7 +41,6 @@ export default {
         const json = parser.parse(text);
 
         if (json.profile) {
-          proxyAvatarUrls(json.profile, request.url);
           console.log(response.status, request.url);
           return new Response(JSON.stringify(json), {
             headers: { "content-type": "application/json" },
@@ -103,25 +102,6 @@ async function resizeAvatar(request: Request, url: URL): Promise<Response> {
   return fetch(new Request(imageUrl, {
     headers: request.headers,
   }), options);
-}
-
-function proxyAvatarUrls(value: unknown, requestUrl: string): void {
-  if (Array.isArray(value)) {
-    for (const item of value) proxyAvatarUrls(item, requestUrl);
-    return;
-  }
-
-  if (!value || typeof value !== "object") return;
-
-  for (const [field, fieldValue] of Object.entries(value)) {
-    if (/^avatar(?:icon|medium|full)$/i.test(field) && typeof fieldValue === "string") {
-      const proxyUrl = new URL("/resize", requestUrl);
-      proxyUrl.searchParams.set("url", fieldValue);
-      (value as Record<string, unknown>)[field] = proxyUrl.toString();
-    } else {
-      proxyAvatarUrls(fieldValue, requestUrl);
-    }
-  }
 }
 
 function parseDimension(value: string | null, fallback: number): number | null {
