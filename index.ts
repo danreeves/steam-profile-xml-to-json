@@ -1,4 +1,5 @@
 import { XMLParser } from "fast-xml-parser";
+import { type Rgb, flattenPng } from "./png";
 const NOT_FOUND = JSON.stringify({ error: "not found" });
 const parser = new XMLParser({
   ignoreDeclaration: true,
@@ -13,6 +14,7 @@ const CANVAS_HEIGHT = 100;
 const AVATAR_SIZE_RANGE: [number, number] = [50, CANVAS_WIDTH];
 const TRANSPARENT_CANVAS_URL =
   "https://placehold.co/90x100/transparent/transparent.png";
+const DEFAULT_BACKGROUND = "000000";
 
 type ImageTransformOptions = {
   fit?: "contain";
@@ -96,6 +98,11 @@ async function resizeAvatar(request: Request, url: URL): Promise<Response> {
     });
   }
 
+  const background = parseBackground(url.searchParams.get("background"));
+  if (background === null) {
+    return new Response("Invalid background [RRGGBB]", { status: 400 });
+  }
+
   const options: ImageRequestInit = {
     cf: {
       image: {
@@ -114,7 +121,27 @@ async function resizeAvatar(request: Request, url: URL): Promise<Response> {
     },
   };
 
-  return fetch(TRANSPARENT_CANVAS_URL, options);
+  const resized = await fetch(TRANSPARENT_CANVAS_URL, options);
+  if (!resized.ok || resized.headers.get("content-type") !== "image/png") {
+    return resized;
+  }
+
+  const png = new Uint8Array(await resized.arrayBuffer());
+  let body: Uint8Array = png;
+
+  // A PNG that can't be flattened is still returned as Cloudflare made it
+  try {
+    body = await flattenPng(png, background);
+  } catch (e) {
+    console.error(`Failed to flatten the resized image: ${e}`);
+  }
+
+  return new Response(body, {
+    headers: {
+      "content-type": "image/png",
+      "cache-control": resized.headers.get("cache-control") ?? "public, max-age=86400",
+    },
+  });
 }
 
 function parseDimension(value: string | null, fallback: number): number | null {
@@ -128,4 +155,16 @@ function parseDimension(value: string | null, fallback: number): number | null {
   }
 
   return dimension;
+}
+
+// Six hex digits without a `#`, which would start the URL fragment
+function parseBackground(value: string | null): Rgb | null {
+  const hex = value ?? DEFAULT_BACKGROUND;
+  if (!/^[0-9a-f]{6}$/i.test(hex)) return null;
+
+  return [
+    parseInt(hex.slice(0, 2), 16),
+    parseInt(hex.slice(2, 4), 16),
+    parseInt(hex.slice(4, 6), 16),
+  ];
 }

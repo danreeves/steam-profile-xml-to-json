@@ -23,13 +23,21 @@ Returns the Steam profile as JSON.
 Example: `https://steam-profile-xml-to-json.dnrvs.workers.dev/76561198032229961`
 
 ### `/resize?url=<cdn-url>`
-Proxies a Steam avatar CDN URL as a `90x100` transparent PNG portrait canvas.
+Proxies a Steam avatar CDN URL as an opaque `90x100` PNG portrait canvas.
 The URL must point to a Steam avatar CDN host:
 `avatars.akamai.steamstatic.com` or `avatars.cloudflare.steamstatic.com`.
 
 The default avatar size is `90x90`, centered in the fixed canvas. Use `size` to
 adjust only the avatar inside the canvas, for example
 `/resize?url=<encoded-cdn-url>&size=72`.
+
+The image is opaque. ProfilePictures puts the picture into the icon slot of
+Darktide's portrait frame material, which ignores transparency, so the padding
+around the avatar and any transparent parts of the avatar are filled with
+`background`, and the avatar's edges are blended into it. `background` is six
+hex digits without `#` (defaults to `000000`, black), for example
+`/resize?url=<encoded-cdn-url>&size=72&background=1a1a1a`. Anything else is
+rejected with a `400`.
 
 The profile endpoint leaves avatar URLs unchanged. Use this endpoint explicitly
 when a padded portrait image is needed.
