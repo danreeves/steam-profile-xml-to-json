@@ -6,6 +6,7 @@ const parser = new XMLParser({
 });
 
 const STEAM_AVATAR_CDNS = new Set([
+  "avatars.steamstatic.com",
   "avatars.akamai.steamstatic.com",
   "avatars.cloudflare.steamstatic.com",
 ]);
